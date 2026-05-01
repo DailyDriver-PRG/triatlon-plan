@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miladatlon Plán 🏁</title>
+
+<!-- PWA -->
+<meta name="application-name" content="Miladatlon Plán">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Triatlon">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Miladatlon LONG-L — osobní tréninkový a jídelní plán">
+<link rel="manifest" href="manifest.json">
+
+<!-- Apple touch icon (inline SVG jako data URI) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0a0a'/><text y='72' x='10' font-size='70'>🏁</text></svg>">
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a; --dark: #111217; --card: #16181f; --border: #1e2128;
+    --accent: #e8ff47; --accent2: #47c8ff; --accent3: #ff6b35;
+    --text: #e8e8e8; --muted: #666b7a; --white: #f5f5f0;
+    --swim: #47c8ff; --bike: #c084fc; --run: #4ade80; --gym: #fb923c;
+    --rest: #94a3b8; --brick: #fbbf24;
+    --p1: #ef4444; --p2: #3b82f6; --p3: #22c55e; --p4: #a855f7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.6; }
+
+  .hero { background:var(--dark); border-bottom:1px solid var(--border); padding:52px 40px 44px; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; top:-80px; right:-80px; width:400px; height:400px; background:radial-gradient(circle,rgba(232,255,71,.07) 0%,transparent 70%); pointer-events:none; }
+  .hero-tag { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--accent); text-transform:uppercase; margin-bottom:14px; display:block; }
+  .hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(50px,9vw,108px); line-height:.9; color:var(--white); margin-bottom:22px; }
+  .hero h1 span { color:var(--accent); }
+  .hero-stats { display:flex; gap:12px; flex-wrap:wrap; margin-top:28px; }
+  .stat-box { background:rgba(232,255,71,.04); border:1px solid rgba(232,255,71,.15); border-radius:8px; padding:12px 18px; }
+  .stat-box .val { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); line-height:1; }
+  .stat-box .lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+  .dist-pills { display:flex; gap:12px; flex-wrap:wrap; margin-top:22px; }
+  .dp { display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); border-radius:100px; padding:7px 14px; font-size:13px; font-weight:500; }
+  .dp .n { color:var(--accent); font-family:'DM Mono',monospace; }
+
+  section { padding:52px 40px; border-bottom:1px solid var(--border); }
+  .section-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  h2 { font-family:'Bebas Neue',sans-serif; font-size:38px; color:var(--white); line-height:1; margin-bottom:24px; }
+  h3 { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--white); margin-bottom:14px; }
+
+  .alert { background:rgba(255,107,53,.08); border-left:3px solid var(--accent3); border-radius:0 8px 8px 0; padding:18px 22px; margin-bottom:28px; font-size:14px; line-height:1.7; }
+  .alert strong { color:var(--accent3); }
+  .hl { background:rgba(232,255,71,.04); border:1px solid rgba(232,255,71,.12); border-radius:8px; padding:14px 18px; font-size:13.5px; color:#ccc; margin-bottom:22px; line-height:1.7; }
+  .hl strong { color:var(--accent); }
+
+  /* MONTHLY GOALS */
+  .month-goals { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:32px; }
+  .mg-card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .mg-head { padding:14px 18px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; display:flex; justify-content:space-between; align-items:center; }
+  .mg-date { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; font-weight:400; }
+  .mg-body { padding:14px 18px; }
+  .mg-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+  .mg-row:last-child { border-bottom:none; }
+  .mg-label { font-size:12px; color:var(--muted); }
+  .mg-val { font-family:'DM Mono',monospace; font-size:13px; font-weight:500; color:var(--white); }
+  .mg-weight { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); }
+  .mg-weight span { font-size:13px; color:var(--muted); font-family:'DM Sans',sans-serif; font-weight:400; }
+
+  .progress-track { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px 24px; margin-bottom:28px; }
+  .pt-label { font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; font-family:'DM Mono',monospace; }
+  .pt-row { display:grid; grid-template-columns:80px 120px repeat(4,1fr); gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:13px; }
+  .pt-row:last-child { border-bottom:none; }
+  .pt-row.header { color:var(--muted); font-size:11px; font-family:'DM Mono',monospace; letter-spacing:1px; }
+  .pt-disc { font-weight:600; }
+  .pt-cell { text-align:center; font-family:'DM Mono',monospace; font-size:12px; }
+  .pt-cell.target { color:var(--accent); font-weight:500; }
+
+  /* PHASE TABS */
+  .phase-nav { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .phase-btn { padding:8px 18px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--muted); font-size:13px; font-family:'DM Mono',monospace; cursor:pointer; transition:all .2s; }
+  .phase-btn.active, .phase-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(232,255,71,.05); }
+
+  /* WEEK BLOCKS */
+  .week-block { background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:16px; overflow:hidden; }
+  .week-header { display:flex; align-items:center; justify-content:space-between; padding:14px 22px; background:rgba(255,255,255,.02); border-bottom:1px solid var(--border); }
+  .wh-title { font-family:'Bebas Neue',sans-serif; font-size:18px; }
+  .wh-badge { font-family:'DM Mono',monospace; font-size:10px; padding:3px 10px; border-radius:100px; }
+  .day-row { display:grid; grid-template-columns:80px 1fr 70px 36px; gap:12px; align-items:center; padding:12px 22px; border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; }
+  .day-row:last-child { border-bottom:none; }
+  .day-row:hover { background:rgba(255,255,255,.02); }
+  .day-name { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+  .day-act { font-size:13.5px; }
+  .day-act strong { color:var(--white); }
+  .day-tag { font-size:10px; font-family:'DM Mono',monospace; padding:3px 8px; border-radius:4px; text-align:center; white-space:nowrap; }
+  .t-swim { background:rgba(71,200,255,.1); color:var(--swim); border:1px solid rgba(71,200,255,.2); }
+  .t-run { background:rgba(74,222,128,.08); color:var(--run); border:1px solid rgba(74,222,128,.15); }
+  .t-bike { background:rgba(192,132,252,.1); color:var(--bike); border:1px solid rgba(192,132,252,.2); }
+  .t-gym { background:rgba(251,146,60,.1); color:var(--gym); border:1px solid rgba(251,146,60,.2); }
+  .t-rest { background:rgba(255,255,255,.04); color:var(--rest); border:1px solid rgba(255,255,255,.08); }
+  .t-brick { background:rgba(251,191,36,.08); color:var(--brick); border:1px solid rgba(251,191,36,.2); }
+
+  /* CHECKBOX */
+  .cb { width:22px; height:22px; border:1.5px solid var(--border); border-radius:5px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; flex-shrink:0; }
+  .cb:hover { border-color:var(--accent); }
+  .cb.checked { background:var(--accent); border-color:var(--accent); }
+  .cb.checked::after { content:'✓'; color:#000; font-size:13px; font-weight:700; }
+  .day-row.done { opacity:.55; }
+  .day-row.done .day-act { text-decoration:line-through; text-decoration-color:rgba(255,255,255,.3); }
+
+  /* PROGRESS BAR */
+  .prog-wrap { margin-bottom:28px; }
+  .prog-label { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px; font-family:'DM Mono',monospace; }
+  .prog-bar { height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .prog-fill { height:100%; background:linear-gradient(to right,var(--accent3),var(--accent)); border-radius:4px; transition:width .5s ease; }
+
+  /* NUTRITION */
+  .macro-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:32px; }
+  .mc { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; text-align:center; }
+  .mc .mv { font-family:'Bebas Neue',sans-serif; font-size:34px; line-height:1; margin-bottom:2px; }
+  .mc .mu { font-size:12px; color:var(--muted); }
+  .mc .mn { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:6px; }
+  .mc.kcal .mv { color:var(--accent); } .mc.prot .mv { color:var(--accent3); }
+  .mc.carb .mv { color:var(--accent2); } .mc.fat .mv { color:var(--bike); }
+
+  /* WEIGHT TRACKER */
+  .wt-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; }
+  .wt-cell { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+  .wt-week { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); margin-bottom:4px; }
+  .wt-date { font-size:11px; color:var(--text); margin-bottom:6px; }
+  .wt-input { width:100%; background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--accent); font-family:'Bebas Neue',sans-serif; font-size:22px; outline:none; padding:2px 0; }
+  .wt-input::placeholder { color:var(--border); }
+  .wt-unit { font-size:10px; color:var(--muted); margin-top:3px; }
+  .wt-target { font-size:10px; color:var(--muted); margin-top:3px; }
+  .wt-target span { color:rgba(74,222,128,.7); }
+
+  /* SUMMARY STATS */
+  .summary-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:32px; }
+  .sum-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+  .sum-card .sv { font-family:'Bebas Neue',sans-serif; font-size:40px; color:var(--accent); line-height:1; }
+  .sum-card .sl { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+  footer { padding:40px; text-align:center; color:var(--muted); font-size:12px; font-family:'DM Mono',monospace; }
+  footer .big { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--accent); letter-spacing:2px; display:block; margin-bottom:8px; }
+
+  /* MACRO CARDS in nutrition */
+  .mc { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; text-align:center; }
+  .mc .mv { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; margin-bottom:2px; }
+  .mc .mu { font-size:11px; color:var(--muted); }
+  .mc .mn { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:5px; }
+  .mc.kcal .mv { color:var(--accent); }
+  .mc.prot .mv { color:var(--accent3); }
+  .mc.carb .mv { color:var(--accent2); }
+  .mc.fat .mv { color:var(--bike); }
+
+  /* TOP NAV TABS */
+  .top-nav { position:sticky; top:0; z-index:100; background:var(--dark); border-bottom:1px solid var(--border); padding:0 40px; display:flex; gap:0; overflow-x:auto; }
+  .top-nav button { padding:16px 20px; background:none; border:none; border-bottom:3px solid transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; white-space:nowrap; transition:all .2s; }
+  .top-nav button:hover { color:var(--text); }
+  .top-nav button.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* MEAL CARDS */
+  .meal-card { background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:14px; overflow:hidden; }
+  .meal-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; cursor:pointer; transition:background .15s; user-select:none; }
+  .meal-header:hover { background:rgba(255,255,255,.03); }
+  .meal-header-left { display:flex; align-items:center; gap:14px; }
+  .meal-time-badge { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); min-width:55px; }
+  .meal-name { font-weight:600; font-size:14px; color:var(--white); }
+  .meal-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .meal-header-right { display:flex; align-items:center; gap:12px; }
+  .meal-kcal-badge { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--accent); }
+  .meal-arrow { color:var(--muted); font-size:13px; transition:transform .2s; }
+  .meal-arrow.open { transform:rotate(180deg); }
+  .meal-body { display:none; border-top:1px solid var(--border); padding:20px; }
+  .meal-body.open { display:block; }
+
+  .recipe-section { margin-bottom:18px; }
+  .recipe-section h4 { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; font-family:'DM Mono',monospace; }
+  .ingredient-list { list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+  .ingredient-list li { font-size:13px; color:var(--text); display:flex; gap:8px; align-items:start; line-height:1.4; }
+  .ingredient-list li::before { content:'·'; color:var(--accent); flex-shrink:0; }
+  .steps-list { list-style:none; counter-reset:steps; }
+  .steps-list li { font-size:13px; color:var(--text); padding:7px 0 7px 30px; position:relative; border-bottom:1px solid rgba(255,255,255,.04); line-height:1.5; }
+  .steps-list li:last-child { border-bottom:none; }
+  .steps-list li::before { counter-increment:steps; content:counter(steps); position:absolute; left:0; top:8px; background:var(--accent); color:#000; font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; }
+  .macro-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .macro-pill { font-family:'DM Mono',monospace; font-size:11px; padding:4px 10px; border-radius:100px; }
+  .mp-prot { background:rgba(255,107,53,.1); color:var(--accent3); border:1px solid rgba(255,107,53,.2); }
+  .mp-carb { background:rgba(71,200,255,.1); color:var(--accent2); border:1px solid rgba(71,200,255,.2); }
+  .mp-fat  { background:rgba(192,132,252,.1); color:var(--bike); border:1px solid rgba(192,132,252,.2); }
+  .mp-kcal { background:rgba(232,255,71,.08); color:var(--accent); border:1px solid rgba(232,255,71,.15); }
+  .tip-box { background:rgba(232,255,71,.04); border:1px solid rgba(232,255,71,.12); border-radius:8px; padding:12px 16px; font-size:12.5px; color:#bbb; margin-top:12px; line-height:1.6; }
+  .tip-box strong { color:var(--accent); }
+
+  /* WATER */
+  .water-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:8px; margin-bottom:12px; }
+  .water-cup { width:100%; aspect-ratio:1; background:var(--card); border:1.5px solid var(--border); border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all .2s; }
+  .water-cup.filled { background:rgba(71,200,255,.12); border-color:var(--accent2); }
+  .water-cup.filled::after { content:'💧'; }
+  .water-cup:not(.filled)::after { content:'○'; font-size:14px; color:var(--border); }
+  .water-stats { display:flex; gap:16px; align-items:center; font-size:13px; color:var(--muted); margin-bottom:8px; }
+  .water-stats strong { color:var(--accent2); font-family:'Bebas Neue',sans-serif; font-size:24px; }
+  .water-label { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; margin-bottom:6px; letter-spacing:1px; }
+
+  /* SHOPPING */
+  .shop-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; }
+  .shop-cat { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .shop-cat h4 { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; font-family:'DM Mono',monospace; }
+  .shop-item { display:flex; align-items:center; gap:10px; padding:5px 0; font-size:13px; color:var(--text); border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; transition:opacity .15s; }
+  .shop-item:last-child { border-bottom:none; }
+  .shop-cb { width:16px; height:16px; border:1.5px solid var(--border); border-radius:3px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; transition:all .15s; }
+  .shop-item.bought { opacity:.4; text-decoration:line-through; }
+  .shop-item.bought .shop-cb { background:var(--accent); border-color:var(--accent); color:#000; }
+
+  /* RULES */
+  .rules-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+  .rule-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; }
+  .rule-card .ri { font-size:20px; margin-bottom:10px; }
+  .rule-card h4 { font-size:13px; font-weight:600; color:var(--white); margin-bottom:6px; }
+  .rule-card p { font-size:12.5px; color:#999; line-height:1.5; }
+
+  /* ─── DIARY ─── */
+  .diary-form { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:28px; }
+  .diary-form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+  .df-field { display:flex; flex-direction:column; gap:6px; }
+  .df-field label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-family:'DM Mono',monospace; }
+  .df-field input, .df-field select, .df-field textarea {
+    background:var(--dark); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-size:14px; padding:10px 12px; font-family:'DM Sans',sans-serif;
+    outline:none; transition:border .2s; resize:vertical;
+  }
+  .df-field input:focus, .df-field select:focus, .df-field textarea:focus { border-color:var(--accent); }
+  .df-field select option { background:var(--dark); }
+  .diary-save-btn {
+    margin-top:16px; padding:12px 28px; background:var(--accent); color:#000;
+    border:none; border-radius:8px; font-weight:700; font-size:14px; cursor:pointer;
+    transition:opacity .2s;
+  }
+  .diary-save-btn:hover { opacity:.85; }
+
+  .diary-stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-bottom:8px; }
+  .ds-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center; }
+  .ds-val { font-family:'Bebas Neue',sans-serif; font-size:28px; line-height:1; color:var(--accent); }
+  .ds-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:4px; font-family:'DM Mono',monospace; }
+
+  .diary-entry {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    margin-bottom:12px; overflow:hidden; transition:border-color .2s;
+  }
+  .diary-entry:hover { border-color:rgba(244,114,182,.3); }
+  .de-header { display:flex; align-items:center; gap:14px; padding:16px 20px; cursor:pointer; }
+  .de-icon { font-size:24px; flex-shrink:0; }
+  .de-main { flex:1; min-width:0; }
+  .de-title { font-weight:600; font-size:14px; color:var(--white); }
+  .de-meta { font-size:12px; color:var(--muted); margin-top:2px; font-family:'DM Mono',monospace; }
+  .de-stats { display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; }
+  .de-stat { font-size:12px; display:flex; align-items:center; gap:4px; }
+  .de-stat span { color:var(--muted); }
+  .de-stat strong { color:var(--accent); }
+  .de-note { padding:0 20px 16px; font-size:13px; color:#aaa; line-height:1.6; border-top:1px solid var(--border); padding-top:12px; }
+  .de-delete { background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:4px 8px; border-radius:4px; flex-shrink:0; }
+  .de-delete:hover { color:#ef4444; background:rgba(239,68,68,.1); }
+  .de-badge { font-family:'DM Mono',monospace; font-size:10px; padding:3px 8px; border-radius:4px; flex-shrink:0; }
+
+  @media(max-width:700px) { .diary-form-grid { grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <button class="active" onclick="showSection('overview',this)">📊 Přehled</button>
+  <button onclick="showSection('goals',this)">🎯 Cíle</button>
+  <button onclick="showSection('weight',this)">⚖️ Vážení</button>
+  <button onclick="showSection('training',this)">🏋️ Trénink</button>
+  <button onclick="showSection('nutrition',this)" style="color:var(--accent3);">🍽️ Jídelníček</button>
+  <button onclick="showSection('diary',this)" style="color:#f472b6;">📔 Deník</button>
+</nav>
+
+<div id="section-overview">
+<div class="hero">
+  <span class="hero-tag">// Miladatlon LONG-L — Jezero Milada, Ústí nad Labem</span>
+  <h1>117 DNÍ<br><span>DO CÍLE</span></h1>
+  <div class="dist-pills">
+    <div class="dp">🏊 <span class="n">1,5 km</span> plavání (2 okruhy)</div>
+    <div class="dp">🚵 <span class="n">33,6 km</span> MTB (2 okruhy)</div>
+    <div class="dp">🏃 <span class="n">8,1 km</span> běh (3 okruhy)</div>
+    <div class="dp">📅 <span class="n">22. 8.</span> závod</div>
+    <div class="dp">📍 <span class="n">Jezero Milada</span> Ústí n.L.</div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-box"><div class="val">102</div><div class="lbl">kg start</div></div>
+    <div class="stat-box"><div class="val">~88</div><div class="lbl">kg cíl</div></div>
+    <div class="stat-box"><div class="val" id="days-left">—</div><div class="lbl">dní do závodu</div></div>
+    <div class="stat-box"><div class="val" id="done-count">0</div><div class="lbl">splněno tréninků</div></div>
+  </div>
+</div><!-- /hero -->
+</div><!-- /section-overview -->
+
+<div id="section-progress">
+<!-- POKROK -->
+<section>
+  <div class="section-label">// Celkový pokrok</div>
+  <div class="summary-row">
+    <div class="sum-card"><div class="sv" id="prog-pct">0%</div><div class="sl">Splněno tréninků</div></div>
+    <div class="sum-card"><div class="sv" id="total-done">0/84</div><div class="sl">Tréninky celkem</div></div>
+    <div class="sum-card"><div class="sv" id="streak">0</div><div class="sl">Dní v řadě</div></div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-label"><span>Celkový pokrok tréninků</span><span id="pct-label">0 / 84</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="main-prog" style="width:0%"></div></div>
+  </div>
+</section>
+</div><!-- /section-progress -->
+
+<div id="section-goals">
+<!-- MĚSÍČNÍ CÍLE - VÁHA -->
+<section>
+  <div class="section-label">// 01 — Měsíční cíle</div>
+  <h2>CÍLE<br>PO MĚSÍCÍCH</h2>
+
+  <div class="month-goals">
+    <div class="mg-card" style="border-top:3px solid #fbbf24;">
+      <div class="mg-head" style="background:rgba(251,191,36,.08);">
+        <span>START</span><span class="mg-date">27. 4. 2026</span>
+      </div>
+      <div class="mg-body">
+        <div style="text-align:center;padding:8px 0;">
+          <div class="mg-weight">102,0 <span>kg</span></div>
+        </div>
+        <div class="mg-row"><span class="mg-label">🏊 Plavání</span><span class="mg-val">technika, 50m úseky</span></div>
+        <div class="mg-row"><span class="mg-label">🚵 MTB</span><span class="mg-val">první výjezd, 15 km</span></div>
+        <div class="mg-row"><span class="mg-label">🏃 Běh</span><span class="mg-val">chůze + klus 1 min</span></div>
+      </div>
+    </div>
+
+    <div class="mg-card" style="border-top:3px solid var(--p1);">
+      <div class="mg-head" style="background:rgba(239,68,68,.08);">
+        <span style="color:var(--p1);">KVĚTEN</span><span class="mg-date">⭐ Cíl 1. 5.: pod 100 kg</span>
+      </div>
+      <div class="mg-body">
+        <div style="text-align:center;padding:8px 0;">
+          <div class="mg-weight" style="color:var(--p1);">99,5 <span>kg</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">↓ −2,5 kg za 15 dní — nutná přísná dieta!</div>
+        </div>
+        <div class="mg-row"><span class="mg-label">🏊 Plavání</span><span class="mg-val" style="color:var(--swim);">500 m v kuse</span></div>
+        <div class="mg-row"><span class="mg-label">🚵 MTB</span><span class="mg-val" style="color:var(--bike);">22 km terén</span></div>
+        <div class="mg-row"><span class="mg-label">🏃 Běh</span><span class="mg-val" style="color:var(--run);">3 km bez pauzy</span></div>
+        <div class="mg-row"><span class="mg-label">⏱️ Objem</span><span class="mg-val">~5 hodin/týden</span></div>
+      </div>
+    </div>
+
+    <div class="mg-card" style="border-top:3px solid var(--p2);">
+      <div class="mg-head" style="background:rgba(59,130,246,.08);">
+        <span style="color:var(--p2);">ČERVENEC</span><span class="mg-date">Cíl: 1. 7.</span>
+      </div>
+      <div class="mg-body">
+        <div style="text-align:center;padding:8px 0;">
+          <div class="mg-weight" style="color:var(--p2);">93,0 <span>kg</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">↓ −4,5 kg za červen</div>
+        </div>
+        <div class="mg-row"><span class="mg-label">🏊 Plavání</span><span class="mg-val" style="color:var(--swim);">⭐ 1 000 m v kuse</span></div>
+        <div class="mg-row"><span class="mg-label">🚵 MTB</span><span class="mg-val" style="color:var(--bike);">30 km terén</span></div>
+        <div class="mg-row"><span class="mg-label">🏃 Běh</span><span class="mg-val" style="color:var(--run);">⭐ 5 km bez pauzy</span></div>
+        <div class="mg-row"><span class="mg-label">🧱 Brick</span><span class="mg-val" style="color:var(--brick);">20 km + 4 km</span></div>
+        <div class="mg-row"><span class="mg-label">⏱️ Objem</span><span class="mg-val">~7 hodin/týden</span></div>
+      </div>
+    </div>
+
+    <div class="mg-card" style="border-top:3px solid var(--p3);">
+      <div class="mg-head" style="background:rgba(34,197,94,.08);">
+        <span style="color:var(--p3);">SRPEN — 8. 8.</span><span class="mg-date">Zkušební triatlon</span>
+      </div>
+      <div class="mg-body">
+        <div style="text-align:center;padding:8px 0;">
+          <div class="mg-weight" style="color:var(--p3);">88,5 <span>kg</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">↓ −4,5 kg za červenec</div>
+        </div>
+        <div class="mg-row"><span class="mg-label">🏊 Plavání</span><span class="mg-val" style="color:var(--swim);">⭐⭐ 1 500 m!</span></div>
+        <div class="mg-row"><span class="mg-label">🚵 MTB</span><span class="mg-val" style="color:var(--bike);">33,6 km terén</span></div>
+        <div class="mg-row"><span class="mg-label">🏃 Běh</span><span class="mg-val" style="color:var(--run);">8,1 km kopce</span></div>
+        <div class="mg-row"><span class="mg-label">🧱 Mega Brick</span><span class="mg-val" style="color:var(--brick);">34 km + 8 km</span></div>
+        <div class="mg-row"><span class="mg-label">⏱️ Objem</span><span class="mg-val">~10 hodin/týden</span></div>
+      </div>
+    </div>
+
+    <div class="mg-card" style="border-top:3px solid var(--accent); grid-column: span 2;">
+      <div class="mg-head" style="background:rgba(232,255,71,.06);">
+        <span style="color:var(--accent);">🏁 ZÁVOD — 22. 8. 2026</span><span class="mg-date">DEN D</span>
+      </div>
+      <div class="mg-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;padding:12px 0;">
+          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--swim);">1,5 km</div><div style="font-size:11px;color:var(--muted);">Plavání · 2 okruhy</div></div>
+          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--bike);">33,6 km</div><div style="font-size:11px;color:var(--muted);">MTB · 2 okruhy</div></div>
+          <div><div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--run);">8,1 km</div><div style="font-size:11px;color:var(--muted);">Běh · 3 okruhy</div></div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(232,255,71,.04);border-radius:8px;font-size:13px;color:#ccc;">
+          <strong style="color:var(--accent);">Miladatlon LONG-L</strong> · Jezero Milada, Ústí nad Labem · MTB XC hardtail nebo full
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Výkonnostní tabulka -->
+  <h3>Přehled výkonnostních cílů po měsících</h3>
+  <div class="progress-track">
+    <div class="pt-label">vzdálenosti — cíle v kuse bez pauzy | závod: 1,5 km plavání · 33,6 km MTB · 8,1 km běh</div>
+    <div class="pt-row header">
+      <span>Disciplína</span><span></span>
+      <span style="text-align:center;">27.4<br>(Start)</span>
+      <span style="text-align:center;">1.6<br>(Červen)</span>
+      <span style="text-align:center;">1.7<br>(Červenec)</span>
+      <span style="text-align:center;">2.8<br>(Cíl)</span>
+    </div>
+    <div class="pt-row">
+      <span class="pt-disc" style="color:var(--swim);">🏊 Plav.</span><span style="font-size:12px;color:var(--muted);">v kuse · závod 1,5km</span>
+      <span class="pt-cell">50 m</span>
+      <span class="pt-cell">500 m</span>
+      <span class="pt-cell">1 000 m</span>
+      <span class="pt-cell target">1 500 m</span>
+    </div>
+    <div class="pt-row">
+      <span class="pt-disc" style="color:var(--bike);">🚵 MTB</span><span style="font-size:12px;color:var(--muted);">jedno kolo · závod 33,6km</span>
+      <span class="pt-cell">15 km</span>
+      <span class="pt-cell">22 km</span>
+      <span class="pt-cell">30 km</span>
+      <span class="pt-cell target">34 km</span>
+    </div>
+    <div class="pt-row">
+      <span class="pt-disc" style="color:var(--run);">🏃 Běh</span><span style="font-size:12px;color:var(--muted);">bez pauzy · závod 8,1km</span>
+      <span class="pt-cell">1 min</span>
+      <span class="pt-cell">3 km</span>
+      <span class="pt-cell">5 km</span>
+      <span class="pt-cell target">8 km</span>
+    </div>
+    <div class="pt-row">
+      <span class="pt-disc" style="color:var(--brick);">🧱 Brick</span><span style="font-size:12px;color:var(--muted);">MTB+běh</span>
+      <span class="pt-cell">—</span>
+      <span class="pt-cell">—</span>
+      <span class="pt-cell">20+4 km</span>
+      <span class="pt-cell target">34+8 km</span>
+    </div>
+  </div>
+</section>
+</div><!-- /section-goals -->
+
+<div id="section-weight">
+<!-- VÁHA TRACKER -->
+<section>
+  <div class="section-label">// 02 — Vážení</div>
+  <h2>TÝDENNÍ<br>VÁŽENÍ</h2>
+  <div class="hl"><strong>Pravidlo:</strong> Vážit se každé pondělí ráno nalačno, po toaletě, před snídaní. Zadat do pole níže. Hodnoty se ukládají jen v prohlížeči.</div>
+  <div class="wt-grid" id="weight-tracker"></div>
+</section>
+</div><!-- /section-weight -->
+
+<div id="section-training">
+<!-- CHECKLIST TRÉNINKŮ -->
+<section>
+  <div class="section-label">// 03 — Checklist tréninků</div>
+  <h2>TRÉNINKOVÝ<br>CHECKLIST</h2>
+
+  <div class="phase-nav">
+    <button class="phase-btn active" onclick="showPhase('all')">Vše</button>
+    <button class="phase-btn" onclick="showPhase('p1')" style="color:var(--p1);border-color:var(--p1);">F1 — Základ</button>
+    <button class="phase-btn" onclick="showPhase('p2')" style="color:var(--p2);border-color:var(--p2);">F2 — Budování</button>
+    <button class="phase-btn" onclick="showPhase('p3')" style="color:var(--p3);border-color:var(--p3);">F3 — Specifika</button>
+    <button class="phase-btn" onclick="showPhase('p4')" style="color:var(--p4);border-color:var(--p4);">F4 — Tapering</button>
+  </div>
+
+  <div id="checklist-container"></div>
+</section>
+</div><!-- /section-training -->
+
+<div id="section-nutrition" style="display:none;">
+<!-- JÍDELNÍČEK SEKCE -->
+<section>
+  <div class="section-label">// 04 — Jídelníček</div>
+  <h2>KOMPLETNÍ<br>JÍDELNÍČEK</h2>
+
+  <div class="hl"><strong>Filozofie:</strong> Nejdeš na dietu — měníš návyky natrvalo. Každé jídlo = bílkovina + zelenina + (sacharid dle dne). Jednoduché recepty, reálné ingredience, žádná kuchařská škola potřeba.</div>
+
+  <!-- MAKRA -->
+  <div class="macro-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;">
+    <div class="mc kcal"><div class="mv">1800</div><div class="mu">kcal / klidný den</div><div class="mn">Kalorický příjem</div></div>
+    <div class="mc prot"><div class="mv">185g</div><div class="mu">bílkoviny / den</div><div class="mn">Protein</div></div>
+    <div class="mc carb"><div class="mv">170g</div><div class="mu">sacharidy / den</div><div class="mn">Carbs</div></div>
+    <div class="mc fat"><div class="mv">55g</div><div class="mu">tuky / den</div><div class="mn">Fats</div></div>
+  </div>
+  <div style="background:rgba(255,107,53,.08);border-left:3px solid var(--accent3);border-radius:0 8px 8px 0;padding:14px 20px;margin-bottom:28px;font-size:13.5px;line-height:1.7;">
+    <strong style="color:var(--accent3);">⚡ Tréninkový den:</strong> +400 kcal navíc = 2 200 kcal. Přidej větší porci rýže/ovesných vloček k obědu nebo snídani. Protein shake po tréninku povinný.
+  </div>
+
+  <!-- PITNÝ REŽIM -->
+  <h3 style="margin-bottom:14px;">💧 Pitný režim</h3>
+  <div id="water-checklist" style="margin-bottom:32px;"></div>
+
+  <!-- DAY SELECTOR -->
+  <h3 style="margin-bottom:14px;">Jídelní plán — vyber typ dne</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+    <button class="phase-btn active" id="meal-btn-rest" onclick="showMealPlan('rest',this)">Klidný den</button>
+    <button class="phase-btn" id="meal-btn-train" onclick="showMealPlan('train',this)" style="color:var(--accent3);border-color:var(--accent3);">Tréninkový den</button>
+    <button class="phase-btn" id="meal-btn-race" onclick="showMealPlan('race',this)" style="color:var(--brick);border-color:var(--brick);">Den závodu</button>
+  </div>
+
+  <div id="meal-plan-container"></div>
+
+  <!-- NAKUPOVACÍ SEZNAM -->
+  <h3 style="margin-top:36px;margin-bottom:14px;">🛒 Týdenní nákupní seznam</h3>
+  <div id="shopping-list"></div>
+
+  <!-- PRAVIDLA -->
+  <h3 style="margin-top:36px;margin-bottom:14px;">📋 Pevná pravidla výživy</h3>
+  <div id="nutrition-rules"></div>
+</section>
+</div><!-- /section-nutrition -->
+
+<!-- ═══ DENÍK AKTIVIT ═══ -->
+<div id="section-diary" style="display:none;">
+<section>
+  <div class="section-label">// 06 — Deník aktivit</div>
+  <h2>DENÍK<br>POKROKU</h2>
+
+  <div class="hl" style="border-color:rgba(244,114,182,.2);background:rgba(244,114,182,.04);">
+    <strong style="color:#f472b6;">📔 Tvůj osobní deník</strong> — každý záznam se uloží do telefonu. Přidávej aktivity ze Stravy nebo co tě napadne. Trenér to čte. 💪
+  </div>
+
+  <!-- NOVÝ ZÁZNAM -->
+  <div class="diary-form" id="diary-form">
+    <h3 style="margin-bottom:16px;">➕ Přidat aktivitu</h3>
+    <div class="diary-form-grid">
+      <div class="df-field">
+        <label>Datum</label>
+        <input type="date" id="df-date" />
+      </div>
+      <div class="df-field">
+        <label>Typ aktivity</label>
+        <select id="df-type" onchange="onTypeChange(this.value)">
+          <option value="run">🏃 Běh</option>
+          <option value="bike">🚵 MTB / Kolo</option>
+          <option value="swim">🏊 Plavání</option>
+          <option value="brick">🧱 Brick</option>
+          <option value="gym">💪 Silový</option>
+          <option value="walk">🚶 Chůze</option>
+          <option value="other">⚡ Jiné</option>
+        </select>
+      </div>
+      <div class="df-field">
+        <label>Vzdálenost (km)</label>
+        <input type="number" id="df-dist" placeholder="5.16" step="0.01" min="0" />
+      </div>
+      <div class="df-field">
+        <label>Čas (hh:mm)</label>
+        <input type="text" id="df-time" placeholder="42:19" />
+      </div>
+      <div class="df-field">
+        <label>Tempo nebo popis</label>
+        <input type="text" id="df-pace" placeholder="8:12/km nebo volný popis" />
+      </div>
+      <div class="df-field">
+        <label>Kalorie (kcal)</label>
+        <input type="number" id="df-kcal" placeholder="631" min="0" />
+      </div>
+    </div>
+
+    <!-- SWIM CALCULATOR — zobrazí se jen při výběru plavání -->
+    <div id="swim-calc" style="display:none;margin-top:16px;background:rgba(71,200,255,.05);border:1px solid rgba(71,200,255,.2);border-radius:10px;padding:16px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--swim);font-family:'DM Mono',monospace;margin-bottom:12px;">🏊 Kalkulačka bazénu</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end;">
+        <div class="df-field">
+          <label>Bazén</label>
+          <select id="sw-pool" onchange="calcSwim()">
+            <option value="50">🏛️ Vnitřní — 50m</option>
+            <option value="33">☀️ Venkovní — 33m</option>
+          </select>
+        </div>
+        <div class="df-field">
+          <label>Počet délek</label>
+          <input type="number" id="sw-lengths" placeholder="20" min="1" oninput="calcSwim()" />
+        </div>
+        <div class="df-field">
+          <label>Výsledek</label>
+          <div id="sw-result" style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:13px;color:var(--swim);">— m</div>
+        </div>
+      </div>
+      <button onclick="applySwim()" style="margin-top:10px;padding:8px 16px;background:rgba(71,200,255,.15);color:var(--swim);border:1px solid rgba(71,200,255,.3);border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Mono',monospace;">
+        ↗ Přenést do formuláře
+      </button>
+    </div>
+
+    <div class="df-field" style="margin-top:12px;">
+      <label>Poznámky / pocity</label>
+      <textarea id="df-note" rows="3" placeholder="Jak to šlo? S dětma na odrazedlech, bylo to pomalé ale příjemné..."></textarea>
+    </div>
+    <button class="diary-save-btn" onclick="saveDiaryEntry()">💾 Uložit záznam</button>
+  </div>
+
+  <!-- STATISTIKY -->
+  <div id="diary-stats" style="margin:28px 0;"></div>
+
+  <!-- ZÁZNAMY -->
+  <h3 style="margin-bottom:16px;">📋 Všechny aktivity</h3>
+  <div id="diary-entries"></div>
+</section>
+</div><!-- /section-diary -->
+
+<footer>
+  <span class="big">DÁŠ TO 💪</span>
+  27. 4. 2026 → 22. 8. 2026 | 117 dní transformace<br>
+  1,5km plavání + 33,6km MTB + 8,1km běh — terén a kopce<br><br>
+  <em>"Závod nevyhráváš na trati. Vyhráváš ho každé ráno, kdy vstaneš a jdeš trénovat."</em>
+</footer>
+
+<script>
+// ─── DATA ───
+const RACE_DATE = new Date('2026-08-22');
+const START_DATE = new Date('2026-04-27');
+
+const PLAN = [
+  // ═══ FÁZE 1 — ZÁKLAD (týdny 1–4) ═══
+  // Cíl: Naučit se pohybovat. Žádný stres, žádné tempo. Jen pravidelnost.
+  { phase:'p1', color:'var(--p1)', week:'TÝDEN 1', dates:'27. 4.–3. 5.', badge:'Fáze 1 — Základ', days:[
+    {day:'Po 27.4.',act:'🚵 MTB — 45–60 min po rovině. Jdi tempem, při kterém ti jde mluvit. 12–15 km. Užij si to.',tag:'KOLO',tc:'t-bike'},
+    {day:'Út 28.4.',act:'🏊 Bazén — Technika kraulem. Odpočinek mezi každou délkou. Fokus na výdech pod vodou. 🏛️ 50m bazén: 6 délek | ☀️ 33m bazén: 9 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'St 29.4.',act:'🏃 Chůze s klusem — 35 min. 3 min chůze + 1 min klus × 7. Nezadýchat se.',tag:'BĚH',tc:'t-run'},
+    {day:'Čt 30.4.',act:'💪 Silový základ — 45 min. Dřepy 3×12, výpady 3×10, kliky na kolenou 3×8, plank 3×20s.',tag:'GYM',tc:'t-gym'},
+    {day:'Pá 1.5.',act:'😴 Volno — procházka s rodinou, protažení. ⭐ Cíl: pod 100 kg dnes!',tag:'REST',tc:'t-rest'},
+    {day:'So 2.5.',act:'🏊 Bazén — 10 délek kraulem. Po každé délce odpočinek. 🏛️ 50m: 10 délek (500m) | ☀️ 33m: 15 délek (495m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Ne 3.5.',act:'🚵 MTB — 60–75 min. Mírně zvlněný terén. 18–20 km. Tempo: komfortně pomalé.',tag:'KOLO',tc:'t-bike'},
+  ]},
+  { phase:'p1', color:'var(--p1)', week:'TÝDEN 2', dates:'4.–10. 5.', badge:'Fáze 1', days:[
+    {day:'Po 4.5.',act:'🏊 Bazén — 600m celkem. Odpočinek 30–45s mezi délkami. Fokus na rytmus dechu. 🏛️ 50m: 12 délek | ☀️ 33m: 18 délek (594m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 5.5.',act:'🏃 Chůze s klusem — 35 min. 2 min chůze + 2 min klus × 7. Mírně vyšší podíl klusu.',tag:'BĚH',tc:'t-run'},
+    {day:'St 6.5.',act:'💪 Silový — stejná cvičení, +1–2 opakování. Přidán core: bicykl na zádech 3×15.',tag:'GYM',tc:'t-gym'},
+    {day:'Čt 7.5.',act:'🚵 MTB — 60 min. 20 km, rovný nebo mírný terén. Hledej pohodlnou pozici na kole.',tag:'KOLO',tc:'t-bike'},
+    {day:'Pá 8.5.',act:'😴 Volno — strečink 15 min, pěnový válec na stehna a lýtka.',tag:'REST',tc:'t-rest'},
+    {day:'So 9.5.',act:'🏊 Bazén — zkus 2 úseky bez zastávky, pak kratší. Celkem ~600m. 🏛️ 50m: 2× 2 délky + 4× 1 délka | ☀️ 33m: 2× 3 délky + 4× 1 délka (594m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Ne 10.5.',act:'🚵 MTB — 70 min. 22 km. Zkus první mírný kopec — dojít nahoru vlastní silou.',tag:'KOLO',tc:'t-bike'},
+  ]},
+  { phase:'p1', color:'var(--p1)', week:'TÝDEN 3', dates:'11.–17. 5.', badge:'Fáze 1', days:[
+    {day:'Po 11.5.',act:'🏊 Bazén — 4 úseky s 60s pauzou. Celkem ~400m. 🏛️ 50m: 4× 2 délky (400m) | ☀️ 33m: 4× 3 délky (396m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 12.5.',act:'🏃 Klus — 30 min nepřetržitě velmi pomalým tempem. Pokud musíš, přejdi na chůzi. Bez studu.',tag:'BĚH',tc:'t-run'},
+    {day:'St 13.5.',act:'💪 Silový + core — 50 min. Přidán mrtvý tah s lehkou váhou 3×10, boční plank 3×20s.',tag:'GYM',tc:'t-gym'},
+    {day:'Čt 14.5.',act:'🚵 MTB — 75 min. 24 km, terén s kopci. Při stoupání klidně sesednout a tlačit — to je ok.',tag:'KOLO',tc:'t-bike'},
+    {day:'Pá 15.5.',act:'😴 Volno.',tag:'REST',tc:'t-rest'},
+    {day:'So 16.5.',act:'🏊 Bazén — 6 úseků s 45s pauzou. Celkem ~600m. 🏛️ 50m: 6× 2 délky (600m) | ☀️ 33m: 6× 3 délky (594m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Ne 17.5.',act:'🚵 MTB — 80 min. 26 km. Hledej trasu s kopci podobnými závodu.',tag:'KOLO',tc:'t-bike'},
+  ]},
+  { phase:'p1', color:'var(--p1)', week:'TÝDEN 4 — ODPOČINEK ⚠️', dates:'18.–24. 5.', badge:'Odpočinkový týden!', days:[
+    {day:'Po 18.5.',act:'🏊 Bazén — lehce, jen se hýbat. Bez výkonu. 🏛️ 50m: 8 délek (400m) | ☀️ 33m: 12 délek (396m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 19.5.',act:'🏃 Pohodová procházka 40 min nebo velmi pomalý klus 20 min.',tag:'BĚH',tc:'t-run'},
+    {day:'St 20.5.',act:'😴 Volno — protažení, foam rolling.',tag:'REST',tc:'t-rest'},
+    {day:'Čt 21.5.',act:'🚵 MTB — 45 min v pohodě. 15 km bez tlaku.',tag:'KOLO',tc:'t-bike'},
+    {day:'Pá 22.5.',act:'😴 Volno.',tag:'REST',tc:'t-rest'},
+    {day:'','act':'💡 Odpočinkový týden není slabost — je to součást tréninku. Tělo roste při regeneraci, ne při dřině.','tag':'','tc':'t-rest'},
+  ]},
+  // ═══ FÁZE 2 — BUDOVÁNÍ (týdny 5–8) ═══
+  // Cíl: Prodlužovat vzdálenosti. Stále pohodové tempo — "mohl bych takhle jet ještě hodinu?"
+  { phase:'p2', color:'var(--p2)', week:'TÝDEN 5', dates:'25.–31. 5.', badge:'Fáze 2 — Budování', days:[
+    {day:'Po 25.5.',act:'🏊 Bazén — zkus jeden úsek bez zastávky, pak kratší. Celkem ~600m. 🏛️ 50m: 4 délky v kuse + 4× 2 délky (600m) | ☀️ 33m: 6 délek v kuse + 4× 3 délky (594m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 26.5.',act:'🏃 Klus 35 min nepřetržitě. Pomalé tempo — hlavně nezastavit. Cca 4 km.',tag:'BĚH',tc:'t-run'},
+    {day:'St 27.5.',act:'💪 Silový + core — goblet dřep, Romanian deadlift, ab wheel, kettlebell swing.',tag:'GYM',tc:'t-gym'},
+    {day:'Čt 28.5.',act:'🚵 MTB — 90 min, 26 km. Kopce — stoupej svým tempem, ne závodním.',tag:'KOLO',tc:'t-bike'},
+    {day:'Pá 29.5.',act:'😴 Volno — strečink, foam rolling.',tag:'REST',tc:'t-rest'},
+    {day:'So 30.5.',act:'🧱 První BRICK — MTB 20 km → hned 10 min klus. Nohy budou těžké — to je normální a přesně proto to trénujeme.',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 31.5.',act:'🏊 Bazén — 8 úseků s 45s pauzou. Celkem ~800m. 🏛️ 50m: 8× 2 délky (800m) | ☀️ 33m: 8× 3 délky (792m)',tag:'PLAV',tc:'t-swim'},
+  ]},
+  { phase:'p2', color:'var(--p2)', week:'TÝDEN 6 ⭐', dates:'1.–7. 6.', badge:'Milník: 5km bez zastávky!', days:[
+    {day:'Po 1.6.',act:'🏊 Bazén — nejdřív jeden delší úsek v kuse, pak kratší. Celkem ~600m. 🏛️ 50m: 8 délek v kuse + 4× 1 délka (600m) | ☀️ 33m: 12 délek v kuse + 4× 1 délka (528m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 2.6.',act:'⭐ MILNÍK: Zkus 5 km bez zastávky! Jdi velmi pomalu — krok za krokem. Pokud musíš na chvíli přejít, nevadí.',tag:'BĚH',tc:'t-run'},
+    {day:'St 3.6.',act:'💪 Silový — stejná cvičení, větší váha nebo více opakování.',tag:'GYM',tc:'t-gym'},
+    {day:'Čt 4.6.',act:'🚵 MTB — 90 min, 28 km. Terén a kopce. Na kole jez dost pomalu, abys dojel v pohodě domů.',tag:'KOLO',tc:'t-bike'},
+    {day:'Pá 5.6.',act:'😴 Volno.',tag:'REST',tc:'t-rest'},
+    {day:'So 6.6.',act:'🧱 BRICK — MTB 22 km → klus 15 min. Trénuj přechod: přezout obuv, nasadit si helmu zpět atd.',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 7.6.',act:'🏊 Bazén — 10 úseků s 30s pauzou. Celkem ~1 000m. 🏛️ 50m: 10× 2 délky (1 000m) | ☀️ 33m: 10× 3 délky (990m)',tag:'PLAV',tc:'t-swim'},
+  ]},
+  { phase:'p2', color:'var(--p2)', week:'TÝDEN 7 ⭐', dates:'8.–14. 6.', badge:'Milník: 1km plavání v kuse!', days:[
+    {day:'Po 8.6.',act:'⭐ MILNÍK: Zkus 1 000m bez zastávky! Jdi velmi pomalu. Dýchání je klíč. 🏛️ 50m: 20 délek v kuse | ☀️ 33m: 31 délek v kuse (1 023m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 9.6.',act:'🏃 Klus 45 min bez zastávky. Pomalé tempo — rozhovor je stále možný. Cca 5 km.',tag:'BĚH',tc:'t-run'},
+    {day:'St 10.6.',act:'💪 Silový — poslední silový týden s plnou zátěží před přechodem na udržovací.',tag:'GYM',tc:'t-gym'},
+    {day:'Čt 11.6.',act:'🚵 MTB — 90 min, 28–30 km. Terén. Zkus projet celou trasu bez sesedání.',tag:'KOLO',tc:'t-bike'},
+    {day:'Pá 12.6.',act:'😴 Volno — lehká procházka, strečink.',tag:'REST',tc:'t-rest'},
+    {day:'So 13.6.',act:'🧱 BRICK — MTB 25 km → klus 20 min. Zapamatuj si, jak se cítí nohy po kole.',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 14.6.',act:'🏊 Bazén — 1 200m libovolně. Jen plavat. 🏛️ 50m: 24 délek (1 200m) | ☀️ 33m: 37 délek (1 221m)',tag:'PLAV',tc:'t-swim'},
+  ]},
+  { phase:'p2', color:'var(--p2)', week:'TÝDEN 8 — ODPOČINEK ⚠️', dates:'15.–21. 6.', badge:'Odpočinkový týden!', days:[
+    {day:'Po 15.6.',act:'🏊 Bazén — jen se pohybovat, ne výkon. 🏛️ 50m: 10 délek (500m) | ☀️ 33m: 15 délek (495m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 16.6.',act:'🏃 Pohodový klus 25 min.',tag:'BĚH',tc:'t-run'},
+    {day:'St 17.6.',act:'😴 Volno.',tag:'REST',tc:'t-rest'},
+    {day:'Čt 18.6.',act:'🚵 MTB — 50 min, 16 km v klidu.',tag:'KOLO',tc:'t-bike'},
+    {day:'So 20.6.',act:'🧱 Lehký BRICK — MTB 15 km + klus 10 min. Bez tlaku.',tag:'BRICK',tc:'t-brick'},
+    {day:'','act':'💡 Po odpočinkovém týdnu budeš silnější. Tělo potřebuje čas vstřebat trénink.','tag':'','tc':'t-rest'},
+  ]},
+  // ═══ FÁZE 3 — ZÁVODNÍ VZDÁLENOSTI (týdny 9–13) ═══
+  // Cíl: Zvyknout si na závodní vzdálenosti. Tempo stále pohodové. Dokončit = výhra.
+  { phase:'p3', color:'var(--p3)', week:'TÝDEN 9', dates:'22.–28. 6.', badge:'Fáze 3 — Závodní vzdálenosti', days:[
+    {day:'Po 22.6.',act:'🏊 Bazén — 1 200m. Libovolné rozdělení. 🏛️ 50m: 24 délek (1 200m) | ☀️ 33m: 37 délek (1 221m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 23.6.',act:'🏃 Klus 50 min s kopci. Pomalé tempo — kopce jdi klidně chůzí, je to legitimní taktika.',tag:'BĚH',tc:'t-run'},
+    {day:'St 24.6.',act:'🚵 MTB — 2,5 hod, 32–35 km. Terén. Jez energetický gel nebo banán každých 45 min.',tag:'KOLO',tc:'t-bike'},
+    {day:'Čt 25.6.',act:'💪 Lehký gym — jen core a záda. 30 min. Plank, bird dog, face pull.',tag:'GYM',tc:'t-gym'},
+    {day:'Pá 26.6.',act:'🏊 Bazén — 1 400m. 🏛️ 50m: 28 délek (1 400m) | ☀️ 33m: 43 délek (1 419m)',tag:'PLAV',tc:'t-swim'},
+    {day:'So 27.6.',act:'🧱 BRICK — MTB 28 km → klus 25 min. Závodní vzdálenosti se blíží. Pohoda.',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 28.6.',act:'😴 Volno — protažení, lehká procházka.',tag:'REST',tc:'t-rest'},
+  ]},
+  { phase:'p3', color:'var(--p3)', week:'TÝDEN 10 ⭐', dates:'29. 6.–5. 7.', badge:'Milník: 1,5km plavání!', days:[
+    {day:'Po 29.6.',act:'⭐ MILNÍK: Zkus 1 500m bez zastávky! Jdi tempem při kterém vydržíš. Pauzy jsou povoleny. 🏛️ 50m: 30 délek | ☀️ 33m: 46 délek (1 518m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 30.6.',act:'🏃 Klus 55 min. Terén s kopci. Kopce: střídej klus a chůzi. Cca 6–7 km.',tag:'BĚH',tc:'t-run'},
+    {day:'St 1.7.',act:'🚵 MTB — 3 hod, 36–40 km. Delší výjezd. Zastav si, napij se, sněz tyčinku — není to závod.',tag:'KOLO',tc:'t-bike'},
+    {day:'Čt 2.7.',act:'😴 Volno — regenerace.',tag:'REST',tc:'t-rest'},
+    {day:'Pá 3.7.',act:'🏊 Bazén — 1 500m libovolně. 🏛️ 50m: 30 délek (1 500m) | ☀️ 33m: 46 délek (1 518m)',tag:'PLAV',tc:'t-swim'},
+    {day:'So 4.7.',act:'🧱 MEGA BRICK — MTB 30 km → klus 30 min. Celkem přes závodní délky. Gratuluji — to je výkon!',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 5.7.',act:'😴 Volno. Zasloužený odpočinek.',tag:'REST',tc:'t-rest'},
+  ]},
+  { phase:'p3', color:'var(--p3)', week:'TÝDEN 11', dates:'6.–12. 7.', badge:'Fáze 3 — Závodní vzdálenosti', days:[
+    {day:'Po 6.7.',act:'🏊 Bazén — 1 500m pohodovým tempem. 🏛️ 50m: 30 délek jedním dechem | ☀️ 33m: 46 délek (1 518m)',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 7.7.',act:'🏃 Klus 55 min s kopci. Cca 6–7 km. Kopce klidně chůzí.',tag:'BĚH',tc:'t-run'},
+    {day:'St 8.7.',act:'🚵 MTB — 2,5 hod, 32 km. Terén s kopci.',tag:'KOLO',tc:'t-bike'},
+    {day:'Čt 9.7.',act:'💪 Core a záda — 30 min. Jen udržovací.',tag:'GYM',tc:'t-gym'},
+    {day:'Pá 10.7.',act:'🏊 Bazén — 1 200m volně. 🏛️ 50m: 24 délek | ☀️ 33m: 37 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'So 11.7.',act:'🧱 BRICK — MTB 30 km → klus 30 min. Délkou podobné závodu. Jdi svým tempem.',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 12.7.',act:'😴 Volno — regenerace.',tag:'REST',tc:'t-rest'},
+  ]},
+  { phase:'p3', color:'var(--p3)', week:'TÝDEN 12 — ODPOČINEK ⚠️', dates:'13.–19. 7.', badge:'Odpočinkový týden!', days:[
+    {day:'Po 13.7.',act:'🏊 Bazén — 800m klidně. 🏛️ 50m: 16 délek | ☀️ 33m: 25 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 14.7.',act:'🏃 Pohodový klus 30 min.',tag:'BĚH',tc:'t-run'},
+    {day:'St 15.7.',act:'😴 Volno.',tag:'REST',tc:'t-rest'},
+    {day:'Čt 16.7.',act:'🚵 MTB — 50 min, 16 km. Rovina.',tag:'KOLO',tc:'t-bike'},
+    {day:'So 18.7.',act:'🧱 Lehký BRICK — MTB 16 km + klus 15 min.',tag:'BRICK',tc:'t-brick'},
+    {day:'','act':'💡 Tři týdny před závodem. Tělo sbírá síly. Méně je více.','tag':'','tc':'t-rest'},
+  ]},
+  { phase:'p3', color:'var(--p3)', week:'TÝDEN 13 ⭐⭐', dates:'20.–26. 7.', badge:'Mini triatlon!', days:[
+    {day:'Po 20.7.',act:'🏊 Bazén — 1 500m. Pohodové tempo. Tohle umíš. 🏛️ 50m: 30 délek | ☀️ 33m: 46 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 21.7.',act:'🏃 Klus 60 min s kopci. Cca 7 km. Tempo: dokončit v pohodě.',tag:'BĚH',tc:'t-run'},
+    {day:'St 22.7.',act:'🚵 MTB — 2 hod, 28 km. Terén.',tag:'KOLO',tc:'t-bike'},
+    {day:'Čt 23.7.',act:'😴 Volno — foam rolling, strečink.',tag:'REST',tc:'t-rest'},
+    {day:'Pá 24.7.',act:'🏊 Bazén — 1 000m lehce. 🏛️ 50m: 20 délek | ☀️ 33m: 31 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'So 25.7.',act:'⭐⭐ MINI TRIATLON: 1 500m plavání + MTB 22 km + klus 5 km. S přechody T1 a T2. Pochutnáš si!',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 26.7.',act:'😴 Volno. Jsi připravený.',tag:'REST',tc:'t-rest'},
+  ]},
+  // ═══ FÁZE 4 — TAPERING + ZÁVOD (týdny 14–17) ═══
+  { phase:'p4', color:'var(--p4)', week:'TÝDEN 14 ⭐⭐⭐', dates:'27. 7.–2. 8.', badge:'Plný triatlon 2.8.!', days:[
+    {day:'Po 27.7.',act:'🏊 Bazén — 1 200m v klidu. 🏛️ 50m: 24 délek | ☀️ 33m: 37 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 28.7.',act:'🏃 Klus 45 min. Pohodové tempo.',tag:'BĚH',tc:'t-run'},
+    {day:'St 29.7.',act:'🚵 MTB — 70 min, 20 km. Šetři síly na sobotu.',tag:'KOLO',tc:'t-bike'},
+    {day:'Čt 30.7.',act:'😴 Volno — mentální příprava, zkontroluj vybavení.',tag:'REST',tc:'t-rest'},
+    {day:'Pá 31.7.',act:'🏊 Bazén — jen se zahřát. 🏛️ 50m: 10 délek (500m) | ☀️ 33m: 15 délek (495m)',tag:'PLAV',tc:'t-swim'},
+    {day:'So 2.8.',act:'⭐⭐⭐ PLNÝ ZKUŠEBNÍ TRIATLON: 1,5km plavání + 33,6km MTB + 8,1km běh. Svým tempem. Cíl = dojít do cíle.',tag:'BRICK',tc:'t-brick'},
+    {day:'Ne 3.8.',act:'😴 Volno. Zasloužený odpočinek. Za 3 týdny je to ostré.',tag:'REST',tc:'t-rest'},
+  ]},
+  { phase:'p4', color:'var(--p4)', week:'TÝDEN 15 — TAPERING', dates:'4.–10. 8.', badge:'Fáze 4 — Tapering', days:[
+    {day:'Po 4.8.',act:'🏊 Bazén — 800m klidně. 🏛️ 50m: 16 délek | ☀️ 33m: 25 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 5.8.',act:'🏃 Klus 30 min. Lehce.',tag:'BĚH',tc:'t-run'},
+    {day:'St 6.8.',act:'🚵 MTB — 50 min, 14 km. Pohodová jízda.',tag:'KOLO',tc:'t-bike'},
+    {day:'Čt 7.8.',act:'😴 Volno.',tag:'REST',tc:'t-rest'},
+    {day:'Pá 8.8.',act:'🏊 Bazén — jen pohyb. 🏛️ 50m: 8 délek (400m) | ☀️ 33m: 12 délek (396m)',tag:'PLAV',tc:'t-swim'},
+    {day:'So 9.8.',act:'🏃 Pohodový klus 20 min.',tag:'BĚH',tc:'t-run'},
+    {day:'Ne 10.8.',act:'😴 Volno — procházka s rodinou.',tag:'REST',tc:'t-rest'},
+  ]},
+  { phase:'p4', color:'var(--p4)', week:'TÝDEN 16 — FINALE', dates:'11.–17. 8.', badge:'Finální příprava', days:[
+    {day:'Po 11.8.',act:'🏊 Bazén — 600m pomalu. Uvědom si, že tohle zvládáš. 🏛️ 50m: 12 délek | ☀️ 33m: 18 délek',tag:'PLAV',tc:'t-swim'},
+    {day:'Út 12.8.',act:'🏃 Pohodový klus 20 min.',tag:'BĚH',tc:'t-run'},
+    {day:'St 13.8.',act:'😴 Volno. Připrav si závodní batoh — neopren, helmu, boty, gely.',tag:'REST',tc:'t-rest'},
+    {day:'Čt 14.8.',act:'😴 Volno. Projdi si mapou závodní trasy.',tag:'REST',tc:'t-rest'},
+    {day:'Pá 15.8.',act:'🚵 MTB — 30 min, jen se projet. Zkontroluj kolo.',tag:'KOLO',tc:'t-bike'},
+    {day:'So 16.8.',act:'😴 Volno. Hydratace, spánek, lehká večeře.',tag:'REST',tc:'t-rest'},
+    {day:'Ne 17.8.',act:'😴 Volno. Sacharidová večeře — rýže nebo těstoviny. Lehce, spát do 22:00.',tag:'REST',tc:'t-rest'},
+  ]},
+  { phase:'p4', color:'var(--p4)', week:'TÝDEN 17 — ZÁVOD 🏁', dates:'18.–22. 8.', badge:'Race week!', days:[
+    {day:'Po 18.8.',act:'😴 Volno. Jen se protáhni 10 min. Necvič.',tag:'REST',tc:'t-rest'},
+    {day:'Út 19.8.',act:'😴 Volno. Zkontroluj kolo, helmu, neopren, běžecké boty.',tag:'REST',tc:'t-rest'},
+    {day:'St 20.8.',act:'🏊 Pokud možno zaplavej 10 min na Jezeře Milada — jen si zvyknout na vodu.',tag:'PLAV',tc:'t-swim'},
+    {day:'Čt 21.8.',act:'😴 VOLNO. Carb loading — rýže nebo těstoviny k večeři. Spánek do 22:00. Mobil pryč.',tag:'REST',tc:'t-rest'},
+    {day:'🏁 22.8.',act:'ZÁVOD! Snídaně 3h před. Zahřátí 10 min. Plavej pohodově, jeď pohodově, klusu říkej "procházka v přírodě". DOKÁŽEŠ TO.',tag:'ZÁVOD!',tc:'t-brick'},
+  ]},
+];
+
+// ─── WEIGHT TRACKER ───
+const WEIGHT_ENTRIES = [
+  {week:'Start', date:'27.4.', target:102.0},
+  {week:'Týden 1', date:'3.5.', target:101.0},
+  {week:'⭐ 1. 5.', date:'1.5.', target:99.9},
+  {week:'Týden 2', date:'10.5.', target:99.5},
+  {week:'Týden 3', date:'17.5.', target:98.5},
+  {week:'Týden 4', date:'24.5.', target:97.5},
+  {week:'Týden 5', date:'31.5.', target:96.5},
+  {week:'Týden 6', date:'7.6.', target:95.5},
+  {week:'Týden 7', date:'14.6.', target:94.5},
+  {week:'Týden 8', date:'21.6.', target:93.5},
+  {week:'Týden 9', date:'28.6.', target:92.5},
+  {week:'Týden 10', date:'5.7.', target:91.5},
+  {week:'Týden 11', date:'12.7.', target:90.7},
+  {week:'Týden 12', date:'19.7.', target:90.0},
+  {week:'Týden 13', date:'26.7.', target:89.3},
+  {week:'Týden 14', date:'2.8.', target:88.7},
+  {week:'Týden 15', date:'9.8.', target:88.2},
+  {week:'Týden 16', date:'16.8.', target:87.8},
+  {week:'Závod', date:'22.8.', target:87.5},
+];
+
+// ─── STATE ───
+const state = JSON.parse(localStorage.getItem('triatlon_state') || '{"done":{},"weights":{}}');
+
+function save() { localStorage.setItem('triatlon_state', JSON.stringify(state)); }
+
+// ─── WEIGHT TRACKER BUILD ───
+function buildWeightTracker() {
+  const container = document.getElementById('weight-tracker');
+  container.innerHTML = '';
+  WEIGHT_ENTRIES.forEach((e, i) => {
+    const val = state.weights[i] || '';
+    const diff = val ? (parseFloat(val) - e.target).toFixed(1) : '';
+    const diffColor = diff < 0 ? 'var(--run)' : diff > 0 ? 'var(--p1)' : 'var(--accent)';
+    const cell = document.createElement('div');
+    cell.className = 'wt-cell';
+    cell.innerHTML = `
+      <div class="wt-week">${e.week}</div>
+      <div class="wt-date">${e.date}</div>
+      <input class="wt-input" type="number" step="0.1" placeholder="???" value="${val}"
+        oninput="saveWeight(${i}, this.value)" />
+      <div class="wt-unit">kg</div>
+      <div class="wt-target">Cíl: <span>${e.target} kg</span>${diff ? ` | <span style="color:${diffColor}">${diff > 0 ? '+' : ''}${diff}</span>` : ''}</div>
+    `;
+    container.appendChild(cell);
+  });
+}
+
+function saveWeight(idx, val) {
+  state.weights[idx] = val;
+  save();
+  buildWeightTracker();
+}
+
+// ─── CHECKLIST BUILD ───
+function buildChecklist() {
+  const container = document.getElementById('checklist-container');
+  container.innerHTML = '';
+
+  PLAN.forEach((week, wi) => {
+    const block = document.createElement('div');
+    block.className = 'week-block';
+    block.dataset.phase = week.phase;
+
+    const doneCount = week.days.filter((d, di) => state.done[`${wi}-${di}`]).length;
+    const totalCount = week.days.filter(d => d.day).length;
+
+    block.innerHTML = `
+      <div class="week-header">
+        <span class="wh-title" style="color:${week.color}">${week.week} <span style="color:var(--muted);font-size:14px;font-family:'DM Mono',monospace;">${week.dates}</span></span>
+        <span class="wh-badge" style="background:rgba(255,255,255,.05);color:${week.color};border:1px solid ${week.color};">${doneCount}/${totalCount} splněno</span>
+      </div>
+      ${week.days.map((d, di) => {
+        if (!d.day) return `<div style="padding:10px 22px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.01);">${d.act}</div>`;
+        const isDone = state.done[`${wi}-${di}`];
+        return `
+          <div class="day-row ${isDone ? 'done' : ''}" id="row-${wi}-${di}">
+            <div class="day-name">${d.day}</div>
+            <div class="day-act">${d.act}</div>
+            <div class="day-tag ${d.tc}">${d.tag}</div>
+            <div class="cb ${isDone ? 'checked' : ''}" onclick="toggleDone(${wi},${di})"></div>
+          </div>
+        `;
+      }).join('')}
+    `;
+    container.appendChild(block);
+  });
+
+  updateStats();
+}
+
+function toggleDone(wi, di) {
+  const key = `${wi}-${di}`;
+  state.done[key] = !state.done[key];
+  save();
+  buildChecklist();
+}
+
+function updateStats() {
+  const total = PLAN.reduce((s, w) => s + w.days.filter(d => d.day).length, 0);
+  const done = Object.values(state.done).filter(Boolean).length;
+  const pct = Math.round((done / total) * 100);
+
+  document.getElementById('done-count').textContent = done;
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('total-done').textContent = `${done}/${total}`;
+  document.getElementById('main-prog').style.width = pct + '%';
+  document.getElementById('pct-label').textContent = `${done} / ${total}`;
+
+  // Streak (simplified)
+  document.getElementById('streak').textContent = done;
+}
+
+function showPhase(phase) {
+  document.querySelectorAll('.week-block').forEach(b => {
+    b.style.display = (phase === 'all' || b.dataset.phase === phase) ? '' : 'none';
+  });
+  document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ─── SECTION NAVIGATION (defined later, placeholder removed) ───
+
+// ─── WATER CHECKLIST ───
+const WATER_GOALS = [
+  {label:'Ráno nalačno', ml:500, icon:'🌅'},
+  {label:'Dopoledne', ml:500, icon:'☀️'},
+  {label:'Před obědem', ml:300, icon:'🥗'},
+  {label:'K obědu', ml:400, icon:'🍽️'},
+  {label:'Odpoledne', ml:500, icon:'⛅'},
+  {label:'Před tréninkem', ml:400, icon:'💪'},
+  {label:'Během/po tréninku', ml:600, icon:'🏃'},
+  {label:'Večer', ml:300, icon:'🌙'},
+];
+
+function buildWaterChecklist() {
+  const container = document.getElementById('water-checklist');
+  if (!container) return;
+  const done = state.water || {};
+  const totalMl = WATER_GOALS.reduce((s,g) => s + g.ml, 0);
+  const doneMl = WATER_GOALS.reduce((s,g,i) => s + (done[i] ? g.ml : 0), 0);
+  const pct = Math.round(doneMl / totalMl * 100);
+
+  container.innerHTML = `
+    <div class="water-label">Denní pitný cíl: 3 500 ml — klikni na každou sklenici po vypití</div>
+    <div class="water-grid">
+      ${WATER_GOALS.map((g,i) => `
+        <div class="water-cup ${done[i] ? 'filled' : ''}" onclick="toggleWater(${i})" title="${g.label} (${g.ml} ml)"></div>
+      `).join('')}
+    </div>
+    <div class="water-stats">
+      <strong>${doneMl}</strong> / ${totalMl} ml
+      <span style="margin-left:8px;">— ${pct}% denního cíle</span>
+    </div>
+    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;">
+      <div style="height:100%;width:${pct}%;background:var(--accent2);border-radius:3px;transition:width .3s;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:14px;">
+      ${WATER_GOALS.map((g,i) => `
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:${done[i] ? 'var(--accent2)' : 'var(--muted)'};">
+          <span>${g.icon}</span><span>${g.label}</span><span style="margin-left:auto;font-family:'DM Mono',monospace;">${g.ml} ml</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function toggleWater(i) {
+  if (!state.water) state.water = {};
+  state.water[i] = !state.water[i];
+  save();
+  buildWaterChecklist();
+}
+
+// ─── MEAL DATA ───
+const MEALS = {
+  rest: [
+    {
+      time:'07:00', name:'Ovesná kaše s tvarohem', sub:'Snídaně — pomalé sacharidy + protein',
+      kcal:460, prot:38, carb:52, fat:9,
+      ingredients:['60g ovesných vloček','150g tvarohu 0%','100ml polotučného mléka','hrst borůvek nebo jahod','1 lžička medu nebo stévie','štipka skořice'],
+      steps:['Vloč vloče do hrnce, přidej mléko a vodu (1:1), vař 4–5 min za stálého míchání.','Přendej do misky, navrch vyskládej tvaroh.','Přidej ovoce, med, skořici. Podávej ihned.'],
+      tip:'Příprava 7 minut. Uvař si večer, ráno jen ohřej + přidej tvaroh studeně.',
+    },
+    {
+      time:'10:00', name:'Svačina — vejce natvrdo + zelenina', sub:'Dopolední svačina — sytost bez zbytečných kalorií',
+      kcal:210, prot:18, carb:8, fat:12,
+      ingredients:['2 vajíčka natvrdo','1 střední paprika (různobarevná)','6–8 cherry rajčat','sůl, pepř, trochu pažitky'],
+      steps:['Vajíčka vař 9 minut v osolené vodě, zchlaď.','Oloupej a překroj na půl.','Servíruj se zeleninou — žádná majonéza!'],
+      tip:'Uvař si 6–8 vajec vždy v neděli, drž je v lednici pro celý týden.',
+    },
+    {
+      time:'12:30', name:'Kuřecí prsa s rýží a brokolici', sub:'Oběd — základ každého dne',
+      kcal:520, prot:52, carb:55, fat:8,
+      ingredients:['200g kuřecích prsou','60g rýže (suchá váha)','200g brokolice','1 lžíce olivového oleje','sůl, česnek, paprika, kurkuma','šťáva z ½ citronu'],
+      steps:['Rýži uvař podle návodu (cca 15 min). Brokolici rozděl na růžičky.','Kuřecí prsa nakrájej na nudličky, okoření, osmaž na suché nepřilnavé pánvi 5–6 min každou stranu — nebo peč při 200°C 20 min.','Brokolici spař ve vroucí vodě 3 minuty — má zůstat křupavá!','Dej vše do misky, pokap olivovým olejem a citronem.'],
+      tip:'Uvaření pro 3 porce najednou = základ meal prepu. Drž v krabičce v lednici 3 dny.',
+    },
+    {
+      time:'16:00', name:'Řecký jogurt se semínky', sub:'Odpolední svačina — zdravé tuky + protein',
+      kcal:235, prot:20, carb:16, fat:9,
+      ingredients:['200g řeckého jogurtu 2% tuku','1 lžíce slunečnicových nebo dýňových semínek','1 lžička medu (volitelně)','pár borůvek nebo maliny'],
+      steps:['Vysyp jogurt do misky.','Přidej semínka, med, ovoce.','Hotovo — příprava 2 minuty.'],
+      tip:'Semínka jsou plnohodnotná náhrada ořechů — hořčík, zinek, zdravé tuky. Přidej lžíci arašídového másla pro víc proteinu a chuti.',
+    },
+    {
+      time:'19:00', name:'Pečené kuřecí stehno s batátem a salátem', sub:'Večeře — kompletní protein + pomalé sacharidy',
+      kcal:490, prot:44, carb:40, fat:14,
+      ingredients:['200g kuřecího stehna bez kůže','200g batátu','2 hrsti rukoly nebo špenátu','½ okurky, ½ rajčete','1 lžíce olivového oleje','česnek, paprika, sůl, rozmarýn','šťáva z ½ citronu'],
+      steps:['Batát nakrájej na kostičky, okoření olivovým olejem, solí a rozmarýnem. Peč při 200°C 25 minut.','Kuřecí stehno potři česnekem a paprikou. Peč při 200°C 30 minut — do zlatova.','Připrav salát: rukola + okurka + rajče + olivový olej + citron.','Serviruj vše společně.'],
+      tip:'Kuřecí stehno je šťavnatější a levnější než prsa. Bez kůže má skvělý poměr proteinu a tuku.',
+    },
+    {
+      time:'21:00', name:'Noční tvaroh se semínky (volitelně)', sub:'Před spánkem — kaseinový protein',
+      kcal:160, prot:22, carb:7, fat:4,
+      ingredients:['200g tvarohu 0% tuku','1 lžíce dýňových nebo slunečnicových semínek','štipka skořice','½ lžičky vanilkového extraktu','stévie nebo kapka medu'],
+      steps:['Smíchej tvaroh se skořicí a vanilkou.','Posyp semínky navrch.','Jez pomalu 30–60 min před spaním.'],
+      tip:'Dýňová semínka jsou plná hořčíku — pomůžou se spánkem a regenerací svalů. Náhrada za ořechy.',
+    },
+  ],
+  train: [
+    {
+      time:'06:30', name:'Ovesná kaše + proteinový shake', sub:'Snídaně před tréninkem — energie na výkon',
+      kcal:560, prot:48, carb:68, fat:9,
+      ingredients:['70g ovesných vloček','200ml polotučného mléka','1 banán (zralý)','1 odměrka vanilkového proteinu','1 lžíce chia semínek','med dle chuti'],
+      steps:['Připrav kaši z vloček a mléka (4–5 min varu).','Smíchej protein s vodou (200ml) v lahvi nebo mixéru.','Sněz kaši s banánem, protein přidej do misky nebo vypij samostatně.'],
+      tip:'Toto jídlo jez 90–120 minut PŘED tréninkem. Netrénuj na plný žaludek!',
+    },
+    {
+      time:'08:30', name:'Trénink + výživa BĚHEM', sub:'Při tréninku >60 min',
+      kcal:120, prot:2, carb:28, fat:1,
+      ingredients:['1 banán nebo energetický gel','500ml vody s elektrolyty','špetka soli do vody'],
+      steps:['Každých 45 min tréninku sněz banán nebo gel.','Pij 150–200ml vody každých 15–20 minut.','Po tréninku ihned zahájit obnovu (viz další jídlo).'],
+      tip:'Na tréninky kratší než 60 min stačí voda. Gel nebo banán až od 60 minut dál.',
+    },
+    {
+      time:'10:00', name:'Proteinový shake + ovoce (PO TRÉNINKU)', sub:'Do 45 minut po tréninku — anabolické okno',
+      kcal:320, prot:35, carb:36, fat:4,
+      ingredients:['1,5 odměrky proteinu (nebo 250g tvarohu)','250ml polotučného mléka nebo vody','1 banán','100g borůvek nebo jahod'],
+      steps:['Smíchej protein s mlékem v shakeru nebo mixéru.','Přidej banán (rozmačkej nebo nakrájej).','Vypij DO 45 MINUT po tréninku — toto je nejdůležitější timing!'],
+      tip:'Pokud nemáš protein, nahraď 250g tvarohem + banánem. Efekt je stejný, jen pomalejší.',
+    },
+    {
+      time:'13:00', name:'Kuřecí nebo krůtí stehno s quinoou', sub:'Oběd — kompletní aminokyseliny',
+      kcal:580, prot:58, carb:50, fat:12,
+      ingredients:['220g kuřecího nebo krůtího stehna bez kůže','70g quinoi (suchá váha)','150g dušeného špenátu nebo cukety','1 lžíce olivového oleje','česnek, paprika, sůl','hrst cherry rajčat'],
+      steps:['Quinoi propláchni, uvař v osolené vodě 12–15 min, sceď.','Maso okořeň, upec při 200°C 25 min nebo na pánvi.','Zeleninu kráce podus na olivovém oleji s česnekem (5 min).','Smíchej na talíři, přidej cherry rajčata čerstvá.'],
+      tip:'Quinoa má víc proteinu než rýže a obsahuje všechny esenciální aminokyseliny. Po tréninku ideální.',
+    },
+    {
+      time:'16:30', name:'Cottage cheese s paprikou a celozrnným chlebem', sub:'Dopolední svačina — sytost',
+      kcal:290, prot:26, carb:28, fat:7,
+      ingredients:['150g cottage cheese','1 celozrnný toast nebo knäckebrot','1 paprika libovolné barvy','pažitka, sůl, pepř','pár kapek tabasco (volitelně)'],
+      steps:['Cottage cheese okořeň, přidej pažitku a pepř.','Nanes na toast nebo podávej vedle.','Papriku nakrájej na nudličky na namáčení.'],
+      tip:'Cottage cheese má méně tuku než tvaroh ale podobné množství proteinu. Výborný poměr kcal/protein.',
+    },
+    {
+      time:'19:30', name:'Pečené kuřecí nebo krůtí s quinoou a zeleninou', sub:'Večeře — kompletní aminokyseliny po tréninku',
+      kcal:510, prot:52, carb:38, fat:12,
+      ingredients:['200g kuřecích prsou nebo krůtího masa','60g quinoi (suchá váha)','300g dušené zeleniny (brokolice, mrkev, cuketa)','1 lžíce olivového oleje','česnek, paprika, sůl, kurkuma','½ citronu'],
+      steps:['Quinoi propláchni, uvař v osolené vodě 12–15 min, sceď.','Maso okořeň, upec při 200°C 25 min nebo na pánvi.','Zeleninu podus na olivovém oleji s česnekem (5 min) — má zůstat křupavá.','Smíchej na talíři, zakápni citronem.'],
+      tip:'Krůtí maso je výborná a levná alternativa kuřecího — víc proteinu, méně tuku. V tréninkový den ideální.',
+    },
+    {
+      time:'21:30', name:'Protein shake nebo tvaroh', sub:'Regenerace přes noc',
+      kcal:180, prot:30, carb:8, fat:2,
+      ingredients:['200g tvarohu 0% nebo 1 odměrka kaseinu','skořice, vanilka','stévie nebo kapka medu'],
+      steps:['Smíchej, sněz pomalu 30 min před spaním.'],
+      tip:'V tréninkový den je noční protein ještě důležitější — svaly opravuje tělo nejvíc ve spánku.',
+    },
+  ],
+  race: [
+    {
+      time:'3h před startem', name:'Závodní snídaně — carb loading', sub:'Energetická základna na celý závod',
+      kcal:650, prot:25, carb:110, fat:10,
+      ingredients:['100g ovesných vloček','200ml mléka','2 banány','1 lžíce medu','1 toast celozrnný s džemem','200ml ovocného džusu (výjimečně!)'],
+      steps:['Uvař kaši z vloček a mléka.','Přidej med a nakrájený banán.','Přidej toast s džemem.','Jez pomalu, v klidu — bez stresu.'],
+      tip:'3 hodiny = optimální čas. Méně = neplné zásoby. Více = ještě trávíš. ŽÁDNÉ nové potraviny — jen to co znáš!',
+    },
+    {
+      time:'45 min před startem', name:'Rychlá energie — gel nebo banán', sub:'Nastartování glykogenových rezerv',
+      kcal:100, prot:1, carb:25, fat:0,
+      ingredients:['1 energetický gel (izotonický)','nebo 1 zralý banán','300ml vody s elektrolyty'],
+      steps:['Sněz banán nebo gel s dostatkem vody.','Udělej si zahřátí 15 min (lehký klus, pohybové cviky).','Jdi na start klidný — jídlo i trénink máš za sebou.'],
+      tip:'Nezkoušej nové gely v den závodu! Pouze produkty, které jsi testoval na tréninku.',
+    },
+    {
+      time:'Na kole (každých 30–45 min)', name:'Výživa na kole', sub:'Udržení výkonu na 40km úseku',
+      kcal:200, prot:3, carb:44, fat:2,
+      ingredients:['2× energetický gel nebo tyčinka','500–750ml sportovního nápoje','záložní banán v kapse dresu'],
+      steps:['Jez ještě než pocítíš hlad — to je příliš pozdě!','Pij každých 15 minut bez ohledu na žízeň.','Poslední gel 10–15 min před koncem kola (přechod na běh).'],
+      tip:'Na kole je nejsnazší jíst. Využij to naplno — na běhu je to mnohem těžší.',
+    },
+    {
+      time:'Na běhu (po potřebě)', name:'Výživa na běhu', sub:'Dokončení závodu v cíli',
+      kcal:100, prot:0, carb:25, fat:0,
+      ingredients:['gel nebo cola (na závodišti)','voda na každém občerstvení','elektrolytové tablety (volitelně)'],
+      steps:['Pij na každém zásobovacím místě — i kdyby jen trochu.','Pokud máš nevolnost — přejdi na chůzi, sněz slaný gel.','Prvních 2 km běhu jdi v klidu — noh po kole jsou těžké!'],
+      tip:'Cola na závodech je legitimní záchrana — rychlý cukr + kofein. Na záchrannou brzdu.',
+    },
+    {
+      time:'Do 45 min PO závodě', name:'Regenerace po závodě 🏁', sub:'Obnova po extrémní zátěži',
+      kcal:600, prot:45, carb:70, fat:10,
+      ingredients:['protein shake + banán (ihned)','nebo tvaroh + ovoce','1–2 hodiny po: normální velké jídlo','dostatek vody + elektrolytů'],
+      steps:['Ihned po cíli: protein shake nebo tvaroh s banánem.','Pij pomalu velké množství vody s elektrolyty.','Za 1–2 hodiny: normální výdatné jídlo (kuřecí, rýže, zelenina).','Večer: extra sacharidy jsou v pořádku — zasloužíš si to!'],
+      tip:'Po závodě NEJEZ fast food jako odměnu — tělo potřebuje kvalitní živiny pro regeneraci, ne zánět.',
+    },
+  ],
+};
+
+// ─── BUILD MEAL PLAN ───
+let currentMealPlan = 'rest';
+
+function buildMealPlan(type) {
+  currentMealPlan = type;
+  const container = document.getElementById('meal-plan-container');
+  if (!container) return;
+  const meals = MEALS[type];
+  const totalKcal = meals.reduce((s,m) => s+m.kcal, 0);
+  const totalProt = meals.reduce((s,m) => s+m.prot, 0);
+  const totalCarb = meals.reduce((s,m) => s+m.carb, 0);
+  const totalFat  = meals.reduce((s,m) => s+m.fat,  0);
+
+  container.innerHTML = `
+    <div style="background:rgba(232,255,71,.04);border:1px solid rgba(232,255,71,.12);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">CELKEM DNE:</span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);">${totalKcal} kcal</span>
+      <span style="font-size:12px;color:var(--accent3);">P: ${totalProt}g</span>
+      <span style="font-size:12px;color:var(--accent2);">S: ${totalCarb}g</span>
+      <span style="font-size:12px;color:var(--bike);">T: ${totalFat}g</span>
+    </div>
+    ${meals.map((m, mi) => `
+      <div class="meal-card">
+        <div class="meal-header" onclick="toggleMeal(${mi})">
+          <div class="meal-header-left">
+            <span class="meal-time-badge">${m.time}</span>
+            <div>
+              <div class="meal-name">${m.name}</div>
+              <div class="meal-sub">${m.sub}</div>
+            </div>
+          </div>
+          <div class="meal-header-right">
+            <span class="meal-kcal-badge">${m.kcal} kcal</span>
+            <span class="meal-arrow" id="arrow-${mi}">▼</span>
+          </div>
+        </div>
+        <div class="meal-body" id="meal-body-${mi}">
+          <div class="recipe-section">
+            <h4>🥦 Ingredience</h4>
+            <ul class="ingredient-list">
+              ${m.ingredients.map(i => `<li>${i}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="recipe-section">
+            <h4>👨‍🍳 Postup</h4>
+            <ol class="steps-list">
+              ${m.steps.map(s => `<li>${s}</li>`).join('')}
+            </ol>
+          </div>
+          ${m.tip ? `<div class="tip-box"><strong>💡 Tip trenéra:</strong> ${m.tip}</div>` : ''}
+          <div class="macro-pills">
+            <span class="macro-pill mp-kcal">${m.kcal} kcal</span>
+            <span class="macro-pill mp-prot">Protein: ${m.prot}g</span>
+            <span class="macro-pill mp-carb">Sacharidy: ${m.carb}g</span>
+            <span class="macro-pill mp-fat">Tuky: ${m.fat}g</span>
+          </div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function toggleMeal(mi) {
+  const body = document.getElementById('meal-body-' + mi);
+  const arrow = document.getElementById('arrow-' + mi);
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+function showMealPlan(type, btn) {
+  buildMealPlan(type);
+  document.querySelectorAll('#section-nutrition .phase-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ─── SHOPPING LIST ───
+const SHOPPING = {
+  'Bílkoviny': [
+    {n:'Kuřecí prsa (1kg)',qty:'1 kg/týden'},
+    {n:'Kuřecí nebo krůtí stehno',qty:'400g/týden'},
+    {n:'Hovězí (roštěnec/mleté)',qty:'300g/týden'},
+    {n:'Vejce',qty:'12 ks/týden'},
+    {n:'Tvaroh 0% (500g)',qty:'2× týden'},
+    {n:'Řecký jogurt 2%',qty:'500g/týden'},
+    {n:'Cottage cheese',qty:'300g/týden'},
+  ],
+  'Sacharidy': [
+    {n:'Ovesné vločky',qty:'500g/týden'},
+    {n:'Rýže (bílá nebo hnědá)',qty:'500g/týden'},
+    {n:'Batát',qty:'600g/týden'},
+    {n:'Celozrnný chléb/toast',qty:'1 balení'},
+    {n:'Quinoa',qty:'250g/týden'},
+    {n:'Banány',qty:'8–10 ks'},
+  ],
+  'Zelenina a ovoce': [
+    {n:'Brokolice',qty:'500g/týden'},
+    {n:'Paprika (mix barev)',qty:'4–5 ks'},
+    {n:'Špenát nebo rukola',qty:'200g/týden'},
+    {n:'Cherry rajčata',qty:'250g'},
+    {n:'Okurka',qty:'2 ks'},
+    {n:'Borůvky nebo jahody',qty:'200g/týden'},
+    {n:'Citron',qty:'3–4 ks'},
+    {n:'Cuketa nebo mrkev',qty:'300g/týden'},
+  ],
+  'Tuky a semínka': [
+    {n:'Olivový olej extra virgin',qty:'1 láhev'},
+    {n:'Dýňová semínka',qty:'150g'},
+    {n:'Slunečnicová semínka',qty:'150g'},
+    {n:'Chia semínka',qty:'200g'},
+    {n:'Arašídové máslo (100% arašídy)',qty:'1 sklenice'},
+    {n:'Med',qty:'1 sklenice'},
+  ],
+  'Suplementy': [
+    {n:'Syrovátkový protein',qty:'1 kg (1 měsíc)'},
+    {n:'Kreatin monohydrát',qty:'500g (3 měsíce)'},
+    {n:'Hořčík 300mg',qty:'1 balení'},
+    {n:'Vitamin D3+K2',qty:'1 balení'},
+    {n:'Omega-3 kapsle (z řas nebo lněný olej)',qty:'1 balení'},
+    {n:'Elektrolyty (tablety)',qty:'1 balení'},
+  ],
+  'Tekutiny': [
+    {n:'Voda (min 3,5l/den)',qty:'denně!'},
+    {n:'Zelený čaj (neslazen)',qty:'volitelně'},
+    {n:'Kokosová voda',qty:'na trénink'},
+  ],
+};
+
+function buildShoppingList() {
+  const container = document.getElementById('shopping-list');
+  if (!container) return;
+  const bought = state.shopping || {};
+  container.innerHTML = `<div class="shop-grid">${
+    Object.entries(SHOPPING).map(([cat, items]) => `
+      <div class="shop-cat">
+        <h4>${cat}</h4>
+        ${items.map((item, i) => {
+          const key = cat+'_'+i;
+          const isBought = bought[key];
+          return `
+            <div class="shop-item ${isBought ? 'bought' : ''}" onclick="toggleShop('${key}')">
+              <div class="shop-cb">${isBought ? '✓' : ''}</div>
+              <span>${item.n}</span>
+              <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">${item.qty}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+function toggleShop(key) {
+  if (!state.shopping) state.shopping = {};
+  state.shopping[key] = !state.shopping[key];
+  save();
+  buildShoppingList();
+}
+
+// ─── NUTRITION RULES ───
+const RULES = [
+  {icon:'💧', title:'Voda: 3,5 litru denně', text:'500ml ráno nalačno hned po vstání. Pak každou hodinu 300–400ml. V tréninkové dny navíc 500–600ml během tréninku s elektrolyty.'},
+  {icon:'🥩', title:'Bílkovina v každém jídle', text:'Min. 30–40g proteinu na jídlo. Bez toho svaly nerostou. Kuřecí, ryby, vejce, tvaroh, cottage cheese — vždy jedno z nich.'},
+  {icon:'⏰', title:'Timing kolem tréninku', text:'Jíst 90–120 min PŘED tréninkem. Protein + rychlý sacharid DO 45 min PO. Toto okno je zásadní pro regeneraci a růst svalů.'},
+  {icon:'🚫', title:'Eliminovat úplně', text:'Alkohol, sladké nápoje, fast food, smažené jídlo, bílé pečivo. Výjimka 1× za 2 týdny: 1 "cheat meal" (ne cheat day!).'},
+  {icon:'🌙', title:'Večeře do 20:00', text:'Večer méně sacharidů, více bílkovin a zeleniny. Sacharidy pozdě večer se ukládají snadněji jako tuk. Jedejte do 20:00.'},
+  {icon:'🍽️', title:'Meal prep v neděli', text:'Uvaření 3–4 porcí najednou ti šetří 30 min každý den. Kuřecí prsa + rýže + zelenina = základ na 3 dny v lednici.'},
+  {icon:'📊', title:'Vážit jídlo, ne odhadovat', text:'Koupit kuchyňskou váhu (200 Kč) a první 2 týdny vážit vše. Po 2 týdnech budeš odhady zvládat zpaměti.'},
+  {icon:'🐟', title:'Omega-3 bez ryb', text:'Pokud nejíš ryby, doplň omega-3 z řasového oleje (nejlepší — stejný zdroj jako ryby) nebo lněného oleje (1 lžíce denně do jogurtu nebo kaše). Stejný efekt, žádná chuť ryb.'},
+  {icon:'🔢', title:'1. 5. pod 100 kg', text:'Prvních 15 dní: striktně 1 800 kcal. Žádné výjimky, žádný alkohol. Toto je kritické okno pro dosažení cíle pod 100 kg.'},
+];
+
+function buildNutritionRules() {
+  const container = document.getElementById('nutrition-rules');
+  if (!container) return;
+  container.innerHTML = `<div class="rules-grid">${
+    RULES.map(r => `
+      <div class="rule-card">
+        <div class="ri">${r.icon}</div>
+        <h4>${r.title}</h4>
+        <p>${r.text}</p>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+// ─── SECTION INIT ───
+function initNutrition() {
+  buildWaterChecklist();
+  buildMealPlan('rest');
+  buildShoppingList();
+  buildNutritionRules();
+}
+
+function showSection(name, btn) {
+  const allIds = ['section-overview','section-progress','section-goals','section-weight','section-training','section-nutrition','section-diary'];
+  allIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  const target = document.getElementById('section-' + name);
+  if (target) target.style.display = '';
+  if (name === 'overview') {
+    const prog = document.getElementById('section-progress');
+    if (prog) prog.style.display = '';
+  }
+  document.querySelectorAll('.top-nav button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (name === 'nutrition') initNutrition();
+  if (name === 'diary') initDiary();
+}
+
+// ─── DIARY ───
+const ACTIVITY_META = {
+  run:   { icon:'🏃', label:'Běh',       color:'var(--run)',   unit:'km' },
+  bike:  { icon:'🚵', label:'MTB',       color:'var(--bike)',  unit:'km' },
+  swim:  { icon:'🏊', label:'Plavání',   color:'var(--swim)',  unit:'km' },
+  brick: { icon:'🧱', label:'Brick',     color:'var(--brick)', unit:'km' },
+  gym:   { icon:'💪', label:'Silový',    color:'var(--gym)',   unit:''   },
+  walk:  { icon:'🚶', label:'Chůze',     color:'var(--muted)', unit:'km' },
+  other: { icon:'⚡', label:'Jiné',      color:'var(--accent)','unit':''  },
+};
+
+// Pre-seed s Davidovým prvním tréninkem 29.4.
+const SEED_ENTRY = {
+  id: 'seed-1',
+  date: '2026-04-29',
+  type: 'run',
+  dist: 5.16,
+  time: '42:19',
+  pace: '8:12/km',
+  kcal: 631,
+  note: 'Vycházka s dětma na odrazedlech 😄 Pomalé, ale příjemné. 2. nejrychlejší čas na 5km na Stravě. 59m převýšení. První trénink v plánu — splněno! ✓',
+};
+
+const SEED_ENTRIES = [
+  SEED_ENTRY,
+  {
+    id: 'seed-2',
+    date: '2026-04-30',
+    type: 'swim',
+    dist: 0.33,
+    time: '',
+    pace: '10× 33m (venkovní bazén)',
+    kcal: 0,
+    note: 'První plavání! 10 délek × 33m venkovní bazén = 330m celkem. Vnitřní 50m byl zavřený. Začátek plavecké části přípravy. ✓',
+  },
+  {
+    id: 'seed-3',
+    date: '2026-04-30',
+    type: 'bike',
+    dist: 29.66,
+    time: '1:25',
+    pace: '20,8 km/h · 139W',
+    kcal: 795,
+    note: 'Elektrokolo — odpolední výjezd. 431m převýšení! Pořádné kopce. Bonusová aktivita mimo plán — pohyb se vždy počítá. ⚡',
+  },
+];
+
+function getDiary() {
+  try {
+    const raw = localStorage.getItem('triatlon_diary');
+    const entries = raw ? JSON.parse(raw) : [];
+    // Inject seed entries if not already present
+    let changed = false;
+    for (const seed of SEED_ENTRIES) {
+      if (!entries.find(e => e.id === seed.id)) {
+        entries.push(seed);
+        changed = true;
+      }
+    }
+    if (changed) {
+      entries.sort((a,b) => b.date.localeCompare(a.date));
+      localStorage.setItem('triatlon_diary', JSON.stringify(entries));
+    }
+    return entries;
+  } catch { return [...SEED_ENTRIES]; }
+}
+
+function saveDiary(entries) {
+  localStorage.setItem('triatlon_diary', JSON.stringify(entries));
+}
+
+function saveDiaryEntry() {
+  const date  = document.getElementById('df-date').value;
+  const type  = document.getElementById('df-type').value;
+  const dist  = parseFloat(document.getElementById('df-dist').value) || 0;
+  const time  = document.getElementById('df-time').value.trim();
+  const pace  = document.getElementById('df-pace').value.trim();
+  const kcal  = parseInt(document.getElementById('df-kcal').value) || 0;
+  const note  = document.getElementById('df-note').value.trim();
+
+  if (!date) { alert('Vyplň datum!'); return; }
+
+  const entry = { id: 'e-' + Date.now(), date, type, dist, time, pace, kcal, note };
+  const entries = getDiary();
+  entries.unshift(entry);
+  // Sort by date desc
+  entries.sort((a,b) => b.date.localeCompare(a.date));
+  saveDiary(entries);
+
+  // Reset form
+  document.getElementById('df-dist').value = '';
+  document.getElementById('df-time').value = '';
+  document.getElementById('df-pace').value = '';
+  document.getElementById('df-kcal').value = '';
+  document.getElementById('df-note').value = '';
+
+  renderDiary();
+}
+
+function deleteDiaryEntry(id) {
+  if (!confirm('Smazat tento záznam?')) return;
+  const entries = getDiary().filter(e => e.id !== id);
+  saveDiary(entries);
+  renderDiary();
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('cs-CZ', { weekday:'short', day:'numeric', month:'long' });
+}
+
+function renderDiary() {
+  const entries = getDiary();
+  const container = document.getElementById('diary-entries');
+  const statsEl = document.getElementById('diary-stats');
+  if (!container) return;
+
+  // Stats
+  const totals = { run:0, bike:0, swim:0, brick:0, gym:0, walk:0, other:0 };
+  let totalKcal = 0, totalKm = 0, totalSessions = entries.length;
+  entries.forEach(e => {
+    totals[e.type] = (totals[e.type]||0) + 1;
+    totalKcal += e.kcal || 0;
+    totalKm += e.dist || 0;
+  });
+
+  statsEl.innerHTML = `
+    <div class="diary-stats-grid">
+      <div class="ds-card"><div class="ds-val">${totalSessions}</div><div class="ds-lbl">Aktivit celkem</div></div>
+      <div class="ds-card"><div class="ds-val">${totalKm.toFixed(1)}</div><div class="ds-lbl">km celkem</div></div>
+      <div class="ds-card"><div class="ds-val">${(totalKcal/1000).toFixed(1)}k</div><div class="ds-lbl">kcal spáleno</div></div>
+      <div class="ds-card"><div class="ds-val">${totals.run||0}</div><div class="ds-lbl">Běhy</div></div>
+      <div class="ds-card"><div class="ds-val">${totals.bike||0}</div><div class="ds-lbl">MTB výjezdy</div></div>
+      <div class="ds-card"><div class="ds-val">${totals.swim||0}</div><div class="ds-lbl">Plavání</div></div>
+    </div>
+  `;
+
+  if (entries.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px;">Zatím žádné záznamy. Přidej první aktivitu! 💪</div>`;
+    return;
+  }
+
+  container.innerHTML = entries.map(e => {
+    const meta = ACTIVITY_META[e.type] || ACTIVITY_META.other;
+    const hasNote = e.note && e.note.trim();
+    return `
+    <div class="diary-entry">
+      <div class="de-header">
+        <div class="de-icon">${meta.icon}</div>
+        <div class="de-main">
+          <div class="de-title">${meta.label} — ${formatDate(e.date)}</div>
+          <div class="de-stats">
+            ${e.dist ? `<div class="de-stat"><span>📍</span><strong>${e.dist} km</strong></div>` : ''}
+            ${e.time ? `<div class="de-stat"><span>⏱</span><strong>${e.time}</strong></div>` : ''}
+            ${e.pace ? `<div class="de-stat"><span>💨</span><strong>${e.pace}</strong></div>` : ''}
+            ${e.kcal ? `<div class="de-stat"><span>🔥</span><strong>${e.kcal} kcal</strong></div>` : ''}
+          </div>
+        </div>
+        <span class="de-badge" style="background:rgba(244,114,182,.08);color:#f472b6;border:1px solid rgba(244,114,182,.2);">${meta.label}</span>
+        ${!['seed-1','seed-2','seed-3'].includes(e.id) ? `<button class="de-delete" onclick="deleteDiaryEntry('${e.id}')" title="Smazat">✕</button>` : ''}
+      </div>
+      ${hasNote ? `<div class="de-note">💬 ${e.note}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ─── SWIM CALCULATOR ───
+function onTypeChange(val) {
+  const calc = document.getElementById('swim-calc');
+  if (calc) calc.style.display = val === 'swim' ? '' : 'none';
+}
+
+function calcSwim() {
+  const pool    = parseInt(document.getElementById('sw-pool').value) || 50;
+  const lengths = parseInt(document.getElementById('sw-lengths').value) || 0;
+  const meters  = pool * lengths;
+  const result  = document.getElementById('sw-result');
+  if (!result) return;
+  if (lengths > 0) {
+    result.textContent = meters >= 1000
+      ? `${(meters/1000).toFixed(2)} km (${meters} m)`
+      : `${meters} m`;
+    result.style.color = 'var(--swim)';
+  } else {
+    result.textContent = '— m';
+    result.style.color = 'var(--muted)';
+  }
+}
+
+function applySwim() {
+  const pool    = parseInt(document.getElementById('sw-pool').value) || 50;
+  const lengths = parseInt(document.getElementById('sw-lengths').value) || 0;
+  if (!lengths) return;
+  const meters  = pool * lengths;
+  const km      = (meters / 1000).toFixed(3);
+  const poolLabel = pool === 50 ? 'vnitřní 50m' : 'venkovní 33m';
+
+  document.getElementById('df-dist').value = km;
+  document.getElementById('df-pace').value = `${lengths} délek × ${pool}m (${poolLabel})`;
+}
+
+
+  const dateInput = document.getElementById('df-date');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = new Date().toISOString().split('T')[0];
+  }
+  renderDiary();
+}
+
+// ─── INIT ALL ───
+buildWeightTracker();
+buildChecklist();
+
+// Also hide diary in init
+['section-goals','section-weight','section-training','section-nutrition','section-diary'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+});
+// Days left
+const today = new Date();
+const daysLeft2 = Math.max(0, Math.round((RACE_DATE - today) / 86400000));
+const dlEl = document.getElementById('days-left');
+if (dlEl) dlEl.textContent = daysLeft2;
+
+// ─── PWA SERVICE WORKER REGISTRATION ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+
+// ─── INSTALL BANNER ───
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'flex';
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.style.display = 'none';
+  });
+}
+</script>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--dark);border-top:1px solid var(--border);padding:14px 20px;align-items:center;justify-content:space-between;gap:12px;z-index:999;">
+  <div style="font-size:13px;color:var(--text);">📲 <strong style="color:var(--accent);">Přidat na plochu</strong> — používej jako appku offline</div>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button onclick="installApp()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer;">Instalovat</button>
+    <button onclick="document.getElementById('install-banner').style.display='none'" style="background:var(--border);color:var(--muted);border:none;border-radius:6px;padding:8px 12px;font-size:13px;cursor:pointer;">✕</button>
+  </div>
+</div>
+</body>
+</html>
